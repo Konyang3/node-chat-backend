@@ -83,6 +83,8 @@ router.route('/create-subject').post(createSubjectRouter(pool))
 router.route('/join-subject').post(joinSubjectRouter(pool))
 router.route('/chat-date-list').post(chatRouters.getChatDateList(pool))
 router.route('/create-chat').post(chatRouters.createChatRoom(pool))
+router.route('/chat-message-list').post(chatRouters.getChatMessageList(pool))
+router.route('/close-chat').post(chatRouters.closeChatRoom(pool))
 
 app.use('/', router);
 
