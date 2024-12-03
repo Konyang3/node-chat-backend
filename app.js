@@ -139,7 +139,7 @@ io.sockets.on('connection', function(socket) {
         
         // 방에 들어있는 모든 사용자에게 메시지 전달
         io.sockets.in(message.recepient).emit('message', message);
-        insertChat(pool, message.subjectCode, message.sender, message.data, message.date, message.id, [])
+        insertChat(pool, message.subjectCode, message.sender, message.data, message.date, message.id, message.chatRoomDate)
         // 응답 메시지 전송
         sendResponse(socket, 'message', '200', '방 [' + message.recepient + ']의 모든 사용자들에게 메시지를 전송했습니다.');
     });
@@ -202,14 +202,11 @@ io.sockets.on('connection', function(socket) {
 
         getEmpathy(pool, message.messageId, function (empathyUserList) {
             if (typeof empathyUserList === 'boolean') return
-
-            const toggle = empathyUserList.includes(message.sender)
     
-            updateEmpathy(pool, message.messageId, message.sender, toggle, function() {
+            updateEmpathy(pool, message.messageId, message.sender, empathyUserList, function() {
                 getEmpathy(pool, message.messageId, function(newEmpathyUserList) {
-                    console.log(newEmpathyUserList)
-                    const empathy = newEmpathyUserList.split(',')
-                    message.empathy = empathy[0]?.length === 0 ? [] : empathy
+                    const empathy = newEmpathyUserList.split(',').filter((value) => value.length !== 0)
+                    message.empathy = empathy
                     
                     io.sockets.in(message.recepient).emit('empathy', message);
                 })

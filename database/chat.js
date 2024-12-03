@@ -6,7 +6,7 @@ module.exports = {
     getEmpathy
 }
 
-function insertChat(pool, subjectCode, sender, message, date, id) {
+function insertChat(pool, subjectCode, sender, message, date, id, chatRoomDate) {
     if (pool) {
         pool.getConnection(function(err, conn) {
             if (err) {
@@ -24,7 +24,8 @@ function insertChat(pool, subjectCode, sender, message, date, id) {
                 message,
                 sender,
                 date: format(date, 'yyyy-MM-dd HH:mm'),
-                empathy: ""
+                empathy: "",
+                chat_room: format(chatRoomDate, 'yyyy-MM-dd')
             }
 
             var exec = conn.query('insert into chat_datas set ?', data, function(err, result) {
@@ -43,7 +44,7 @@ function insertChat(pool, subjectCode, sender, message, date, id) {
     }
 }
 
-function updateEmpathy(pool, messageId, userId, toggle, callback) {
+function updateEmpathy(pool, messageId, userId, empathyUserList, callback) {
     if (pool) {
         pool.getConnection(function(err, conn) {
             if (err) {
@@ -54,6 +55,10 @@ function updateEmpathy(pool, messageId, userId, toggle, callback) {
             }
 
             console.log('데이터베이스 연결 스레드 아이디: ' + conn.threadId)
+
+            const toggle = empathyUserList.includes(userId)
+            userId = userId + ","
+
 
             if (toggle) {
                 var exec = conn.query('update chat_datas set empathy = REPLACE(empathy, ?, \'\') where id = ?', [userId, messageId], function(err, result) {
@@ -71,7 +76,7 @@ function updateEmpathy(pool, messageId, userId, toggle, callback) {
                     callback()
                 })
             } else {
-                var exec = conn.query('update chat_datas set empathy = IF(LENGTH(empathy), CONCAT(empathy, \',\', ?), CONCAT(empathy, ?)) where id = ?', [userId, userId, messageId], function(err, result) {
+                var exec = conn.query('update chat_datas set empathy = CONCAT(empathy,?) where id = ?', [userId, messageId], function(err, result) {
                     conn.release()
 
                     console.log('실행 대상 SQL:' + exec.sql)
