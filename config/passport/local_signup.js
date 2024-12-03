@@ -37,7 +37,7 @@ module.exports = new LocalStrategy({
                         console.log('기존에 계정이 있음')
                         return done(null, false, req.flash('signupMessage', '계정이 이미 있습니다.'))
                     } else {
-                        var insert = conn.query('INSERT INTO users (id, username, password) VALUES(?,?,?);', [id, paramName, password], function(err, rows) {
+                        var insert = conn.query('INSERT INTO users (id, username, password, subject_codes) VALUES(?,?,?,?);', [id, paramName, password, ''], function(err, rows) {
                             console.log('실행 대상 SQL: ' + insert.sql)
                             conn.release()
                             if (err) throw err;

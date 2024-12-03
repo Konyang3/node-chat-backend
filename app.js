@@ -22,6 +22,7 @@ var joinSubjectRouter = require('./routes/join-subject')
 var chatRouters = require('./routes/chat')
 
 var {getRandomString} = require('./util/util')
+var {insertChat, updateEmpathy, getEmpathy} = require('./database/chat')
 
 //===== MySQL 데이터베이스 연결 설정 =====//
 var pool      =    mysql.createPool({
@@ -135,14 +136,12 @@ io.sockets.on('connection', function(socket) {
     	console.dir(message);
 
         message.id = getRandomString(16)
-
-        if (message.command == 'groupchat') {
-            // 방에 들어있는 모든 사용자에게 메시지 전달
-            io.sockets.in(message.recepient).emit('message', message);
-                
-            // 응답 메시지 전송
-            sendResponse(socket, 'message', '200', '방 [' + message.recepient + ']의 모든 사용자들에게 메시지를 전송했습니다.');
-        }
+        
+        // 방에 들어있는 모든 사용자에게 메시지 전달
+        io.sockets.in(message.recepient).emit('message', message);
+        insertChat(pool, message.subjectCode, message.sender, message.data, message.date, message.id, [])
+        // 응답 메시지 전송
+        sendResponse(socket, 'message', '200', '방 [' + message.recepient + ']의 모든 사용자들에게 메시지를 전송했습니다.');
     });
 
     // 'room' 이벤트를 받았을 때의 처리
@@ -201,7 +200,21 @@ io.sockets.on('connection', function(socket) {
     socket.on('empathy', function(message) {
         console.log('empathy 이벤트를 받았습니다.')
 
-        io.sockets.in(message.recepient).emit('empathy', message);
+        getEmpathy(pool, message.messageId, function (empathyUserList) {
+            if (typeof empathyUserList === 'boolean') return
+
+            const toggle = empathyUserList.includes(message.sender)
+    
+            updateEmpathy(pool, message.messageId, message.sender, toggle, function() {
+                getEmpathy(pool, message.messageId, function(newEmpathyUserList) {
+                    console.log(newEmpathyUserList)
+                    const empathy = newEmpathyUserList.split(',')
+                    message.empathy = empathy[0]?.length === 0 ? [] : empathy
+                    
+                    io.sockets.in(message.recepient).emit('empathy', message);
+                })
+            })
+        })
     })
 });
 

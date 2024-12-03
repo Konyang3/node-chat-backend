@@ -194,7 +194,6 @@ function getChatMessageList(pool) {
 
         console.log('사용자 인증된 상태임.');
 
-        var date = format(new Date(req.body.date), 'yyyy-MM-dd');
         var subjectCode= req.body.subjectCode;
 
         if (pool) {
@@ -209,7 +208,7 @@ function getChatMessageList(pool) {
                 }
                 console.log('데이터베이스 연결 스레드 아이디: ' + conn.threadId)
 
-                var exec = conn.query('select date, id, message, sender, empathy from chat_datas where subject_code = ? and date = ?', [subjectCode, date], function(err, result) {
+                var exec = conn.query('select date, id, message, sender, empathy from chat_datas where subject_code = ?', [subjectCode], function(err, result) {
                     conn.release();
 
                     console.log('실행 대상 SQL:' + exec.sql)
