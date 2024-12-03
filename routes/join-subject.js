@@ -43,7 +43,7 @@ module.exports = function(pool) {
                     }
 
                     if (result?.length > 0) {
-                        var insert = conn.query('update users set subject_codes = CONCAT(subject_codes, ?) where id = ?', [subjectCode, req.user.id], function(err, result) {
+                        var insert = conn.query('update users set subject_codes = IF(LENGTH(subject_codes), CONCAT(subject_codes, \',\', ?), CONCAT(subject_codes, ?)) where id = ?', [subjectCode, subjectCode, req.user.id], function(err, result) {
                             conn.release()
                             console.log('실행 대상 SQL: ' + insert.sql)
 

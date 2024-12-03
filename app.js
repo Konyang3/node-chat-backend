@@ -21,6 +21,8 @@ var createSubjectRouter = require('./routes/create-subject')
 var joinSubjectRouter = require('./routes/join-subject')
 var chatRouters = require('./routes/chat')
 
+var {getRandomString} = require('./util/util')
+
 //===== MySQL 데이터베이스 연결 설정 =====//
 var pool      =    mysql.createPool({
     connectionLimit : 10, 
@@ -96,6 +98,9 @@ app.all('*', function (req, res) {
 var server = http.createServer(app).listen(app.get('port'), function() {
     console.log('익스프레스 서버를 시작했습니다 : ' + app.get('port'));
 })
+
+var login_ids = {};
+
 //socket.io 서버를 시작합니다.
 var io = socketio(server, {cors: {origin: '*'}});
 console.log('socket.io 요청을 받아들일 준비가 되었습니다.');
@@ -107,5 +112,134 @@ io.sockets.on('connection', function(socket) {
 	// 소켓 객체에 클라이언트 Host, Port 정보 속성으로 추가
 	socket.remoteAddress = socket.request.connection._peername.address;
 	socket.remotePort = socket.request.connection._peername.port;
+
+    // 'login' 이벤트를 받았을 때의 처리
+    socket.on('login', function(login) {
+        console.log('login 이벤트를 받았습니다.');
+        console.dir(login);
+
+        // 기존 클라이언트 ID가 없으면 클라이언트 ID를 맵에 추가
+        console.log('접속한 소켓의 ID : ' + socket.id);
+        login_ids[login.id] = socket.id;
+        socket.login_id = login.id;
+
+        console.log('접속한 클라이언트 ID 갯수 : %d', Object.keys(login_ids).length);
+
+        // 응답 메시지 전송
+        sendResponse(socket, 'login', '200', '로그인되었습니다.');
+    });
+
+    // 'message' 이벤트를 받았을 때의 처리
+    socket.on('message', function(message) {
+    	console.log('message 이벤트를 받았습니다.');
+    	console.dir(message);
+
+        message.id = getRandomString(16)
+
+        if (message.command == 'groupchat') {
+            // 방에 들어있는 모든 사용자에게 메시지 전달
+            io.sockets.in(message.recepient).emit('message', message);
+                
+            // 응답 메시지 전송
+            sendResponse(socket, 'message', '200', '방 [' + message.recepient + ']의 모든 사용자들에게 메시지를 전송했습니다.');
+        }
+    });
+
+    // 'room' 이벤트를 받았을 때의 처리
+    socket.on('room', function(room) {
+    	console.log('room 이벤트를 받았습니다.');
+    	console.dir(room);
+    	
+        if (room.command === 'create') {
+
+        	if (io.sockets.adapter.rooms[room.roomId]) { // 방이 이미 만들어져 있는 경우
+        		console.log('방이 이미 만들어져 있습니다.');
+        		
+        	} else {
+        		console.log('방을 새로 만듭니다.');
+        		
+        		socket.join(room.roomId);
+        		
+	            // var curRoom = io.sockets.adapter.rooms[room.roomId];
+	            // curRoom.id = room.roomId;
+	            // curRoom.name = room.roomName;
+	            // curRoom.owner = room.roomOwner;
+        	}
+
+        } else if (room.command === 'delete') {
+
+            socket.leave(room.roomId);
+ 
+            if (io.sockets.adapter.rooms[room.roomId]) { // 방이  만들어져 있는 경우
+            	delete io.sockets.adapter.rooms[room.roomId];
+            } else {  // 방이  만들어져 있지 않은 경우
+            	console.log('방이 만들어져 있지 않습니다.');
+            	
+            }
+        } else if (room.command === 'join') {  // 방에 입장하기 요청
+
+            socket.join(room.roomId);
+         
+            // 응답 메시지 전송
+            sendResponse(socket, 'room', '200', '방에 입장했습니다.');
+        } else if (room.command === 'leave') {  // 방 나가기 요청
+
+            socket.leave(room.roomId);
+         
+            // 응답 메시지 전송
+            sendResponse(socket, 'room', '200', '방에서 나갔습니다.');
+        }
+
+        var roomList = getRoomList();
+        
+        var output = {command:'list', rooms:roomList};
+        console.log('클라이언트로 보낼 데이터 : ' + JSON.stringify(output));
+        
+        io.sockets.emit('room', output);
+    });
+
+    socket.on('empathy', function(message) {
+        console.log('empathy 이벤트를 받았습니다.')
+
+        io.sockets.in(message.recepient).emit('empathy', message);
+    })
 });
 
+function getRoomList() {
+	console.dir(io.sockets.adapter.rooms);
+	
+    var roomList = [];
+    
+    Object.keys(io.sockets.adapter.rooms).forEach(function(roomId) { // for each room
+    	console.log('current room id : ' + roomId);
+    	var outRoom = io.sockets.adapter.rooms[roomId];
+    	
+    	// find default room using all attributes
+    	var foundDefault = false;
+    	var index = 0;
+        Object.keys(outRoom.sockets).forEach(function(key) {
+        	console.log('#' + index + ' : ' + key + ', ' + outRoom.sockets[key]);
+        	
+        	if (roomId == key) {  // default room
+        		foundDefault = true;
+        		console.log('this is default room.');
+        	}
+        	index++;
+        });
+        
+        if (!foundDefault) {
+        	roomList.push(outRoom);
+        }
+    });
+    
+    console.log('[ROOM LIST]');
+    console.dir(roomList);
+    
+    return roomList;
+}
+
+// 응답 메시지 전송 메소드
+function sendResponse(socket, command, code, message) {
+	var statusObj = {command: command, code: code, message: message};
+	socket.emit('response', statusObj);
+}
