@@ -209,7 +209,9 @@ function getChatMessageList(pool) {
                 }
                 console.log('데이터베이스 연결 스레드 아이디: ' + conn.threadId)
 
-                var exec = conn.query('select date, id, message, sender, empathy from chat_datas where subject_code = ? and chat_room = ?', [subjectCode, date], function(err, result) {
+                const isStudent = req.user.id?.length > 6
+
+                var exec = conn.query(`select date, id, message, ${!isStudent ?'sender, ' : ''} empathy from chat_datas where subject_code = ? and chat_room = ?`, [subjectCode, date], function(err, result) {
                     conn.release();
 
                     console.log('실행 대상 SQL:' + exec.sql)
