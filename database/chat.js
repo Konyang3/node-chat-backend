@@ -23,7 +23,7 @@ function insertChat(pool, subjectCode, sender, message, date, id, chatRoomDate) 
                 id, 
                 message,
                 sender,
-                date: format(date, 'yyyy-MM-dd HH:mm'),
+                date: format(date, 'yyyy-MM-dd HH:mm:ss'),
                 empathy: "",
                 chat_room: format(chatRoomDate, 'yyyy-MM-dd')
             }

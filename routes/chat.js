@@ -211,7 +211,7 @@ function getChatMessageList(pool) {
 
                 const isStudent = req.user.id?.length > 6
 
-                var exec = conn.query(`select date, id, message, ${!isStudent ?'sender, ' : ''} empathy from chat_datas where subject_code = ? and chat_room = ?`, [subjectCode, date], function(err, result) {
+                var exec = conn.query(`select date, id, message, ${!isStudent ?'sender, ' : ''} empathy from chat_datas where subject_code = ? and chat_room = ? order by date`, [subjectCode, date], function(err, result) {
                     conn.release();
 
                     console.log('실행 대상 SQL:' + exec.sql)
