@@ -21,6 +21,7 @@ var createSubjectRouter = require('./routes/create-subject')
 var joinSubjectRouter = require('./routes/join-subject')
 var chatRouters = require('./routes/chat')
 var logout = require('./routes/logout')
+var userRouter = require('./routes/user')
 
 var {getRandomString} = require('./util/util')
 var {insertChat, updateEmpathy, getEmpathy} = require('./database/chat')
@@ -90,6 +91,7 @@ router.route('/create-chat').post(chatRouters.createChatRoom(pool))
 router.route('/chat-message-list').post(chatRouters.getChatMessageList(pool))
 router.route('/close-chat').post(chatRouters.closeChatRoom(pool))
 router.route('/logout').get(logout)
+router.route('/user').get(userRouter)
 
 app.use('/', router);
 
