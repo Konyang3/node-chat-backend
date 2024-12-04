@@ -79,7 +79,7 @@ router.route('/login').post(function(req, res, next) {
             console.log('test')
             console.dir(user)
 
-            return res.status(200).json({...user, subject_codes: user.subject_codes?.split(',')}).send();
+            return res.status(200).json({id: user.id, subject_codes: user.subject_codes?.split(',')}).send();
         });
     })(req, res, next)
 });
