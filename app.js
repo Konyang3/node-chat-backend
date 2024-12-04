@@ -16,6 +16,8 @@ var socketio = require('socket.io');
 // cors 사용 - 클라이언트에서 ajax로 요청 시 CORS(다중 서버 접속) 지원
 var cors = require('cors');
 
+require('dotenv').config();
+
 var subjectListRouter = require('./routes/subject-list')
 var createSubjectRouter = require('./routes/create-subject')
 var joinSubjectRouter = require('./routes/join-subject')

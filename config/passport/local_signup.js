@@ -1,4 +1,5 @@
 var LocalStrategy = require('passport-local').Strategy;
+const {aesDecrypt, sha256Encrypt} = require('../../util/crypto')
 
 module.exports = new LocalStrategy({
 		usernameField : 'id',
@@ -33,16 +34,18 @@ module.exports = new LocalStrategy({
                     console.log('실행 대상 SQL: ' + exec.sql)
                     console.log(rows)
 
+                    const hashedPassword = sha256Encrypt(aesDecrypt(password, process.env.PASSWORD_SECRET))
+
                     if (rows?.length > 0) {
                         console.log('기존에 계정이 있음')
                         return done(null, false, req.flash('signupMessage', '계정이 이미 있습니다.'))
                     } else {
-                        var insert = conn.query('INSERT INTO users (id, username, password, subject_codes) VALUES(?,?,?,?);', [id, paramName, password, ''], function(err, rows) {
+                        var insert = conn.query('INSERT INTO users (id, username, password, subject_codes) VALUES(?,?,?,?);', [id, paramName, hashedPassword, ''], function(err, rows) {
                             console.log('실행 대상 SQL: ' + insert.sql)
                             conn.release()
                             if (err) throw err;
                             console.log('사용자 데이터 추가함', rows)
-                            return done(null, {id: id, username: paramName, password: password})
+                            return done(null, {id: id, username: paramName, password: hashedPassword})
                         })
                     }
                 }) 

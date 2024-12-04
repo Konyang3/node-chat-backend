@@ -1,4 +1,5 @@
 var LocalStrategy = require('passport-local').Strategy;
+const {aesDecrypt, sha256Encrypt} = require('../../util/crypto')
 
 module.exports = new LocalStrategy({
 		usernameField : 'id',
@@ -21,8 +22,10 @@ module.exports = new LocalStrategy({
     
             var column = ['id', 'password', "subject_codes"]
             var tablename = 'users'
+
+            const hashedPassword = sha256Encrypt(aesDecrypt(password, process.env.PASSWORD_SECRET))
     
-            var exec = conn.query('select ?? from ?? where id = ? and password = ?', [column, tablename, id, password], function(err, rows) {
+            var exec = conn.query('select ?? from ?? where id = ? and password = ?', [column, tablename, id, hashedPassword], function(err, rows) {
                 conn.release()
                 console.log('실행 대상 SQL: ' + exec.sql)
                 console.log(rows)
@@ -32,7 +35,7 @@ module.exports = new LocalStrategy({
                     return done(null, false, req.flash('loginMessage', '등록된 계정이 없습니다.'))
                 }
     
-                if(rows[0].password !== password) {
+                if(rows[0].password !== hashedPassword) {
                     console.log('비밀번호가 일치하지 않음')
                     return done(null, false, req.flash('loginMessage', '비밀번호가 일치하지 않습니다.'))
                 }
