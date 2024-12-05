@@ -93,7 +93,7 @@ router.route('/create-chat').post(chatRouters.createChatRoom(pool))
 router.route('/chat-message-list').post(chatRouters.getChatMessageList(pool))
 router.route('/close-chat').post(chatRouters.closeChatRoom(pool))
 router.route('/logout').get(logout)
-router.route('/user').get(userRouter)
+router.route('/user').get(userRouter(pool))
 
 app.use('/', router);
 
