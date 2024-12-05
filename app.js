@@ -33,7 +33,7 @@ var pool      =    mysql.createPool({
     connectionLimit : 10, 
     host     : 'localhost',
     user     : 'root',
-    password : 'JuHmrrFVnRE3h9i',
+    password : process.env.DB_PASSWORD,
     database : 'chat_db',
     debug    :  false
 });
