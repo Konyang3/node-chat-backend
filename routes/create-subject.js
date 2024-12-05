@@ -53,9 +53,22 @@ module.exports = function(pool) {
                         return
                     }
 
-                    res.setHeader('Content-Type', 'application/json');
-                    res.end(JSON.stringify(data))
-                    return
+                    var insert = conn.query('update users set subject_codes = IF(LENGTH(subject_codes), CONCAT(subject_codes, \',\', ?), CONCAT(subject_codes, ?)) where id = ?', [data.subject_code, data.subject_code, req.user.id], function(err, result) {
+                        conn.release()
+                        console.log('실행 대상 SQL: ' + insert.sql)
+
+                        if(err) {
+                            console.log('SQL 실행시 오류 발생함')
+                            console.dir(err)
+            
+                            res.sendStatus(500)
+                            
+                            return
+                        }
+
+                        res.setHeader('Content-Type', 'application/json');
+                        res.end(JSON.stringify(data))
+                    })
                 })
             })
         }

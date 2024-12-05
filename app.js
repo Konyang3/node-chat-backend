@@ -131,9 +131,6 @@ io.sockets.on('connection', function(socket) {
         socket.login_id = login.id;
 
         console.log('접속한 클라이언트 ID 갯수 : %d', Object.keys(login_ids).length);
-
-        // 응답 메시지 전송
-        sendResponse(socket, 'login', '200', '로그인되었습니다.');
     });
 
     // 'message' 이벤트를 받았을 때의 처리
@@ -146,8 +143,6 @@ io.sockets.on('connection', function(socket) {
         // 방에 들어있는 모든 사용자에게 메시지 전달
         io.sockets.in(message.recepient).emit('message', message);
         insertChat(pool, message.subjectCode, message.sender, message.data, message.date, message.id, message.chatRoomDate)
-        // 응답 메시지 전송
-        sendResponse(socket, 'message', '200', '방 [' + message.recepient + ']의 모든 사용자들에게 메시지를 전송했습니다.');
     });
 
     // 'room' 이벤트를 받았을 때의 처리
@@ -164,11 +159,6 @@ io.sockets.on('connection', function(socket) {
         		console.log('방을 새로 만듭니다.');
         		
         		socket.join(room.roomId);
-        		
-	            // var curRoom = io.sockets.adapter.rooms[room.roomId];
-	            // curRoom.id = room.roomId;
-	            // curRoom.name = room.roomName;
-	            // curRoom.owner = room.roomOwner;
         	}
 
         } else if (room.command === 'delete') {
@@ -184,15 +174,9 @@ io.sockets.on('connection', function(socket) {
         } else if (room.command === 'join') {  // 방에 입장하기 요청
 
             socket.join(room.roomId);
-         
-            // 응답 메시지 전송
-            sendResponse(socket, 'room', '200', '방에 입장했습니다.');
         } else if (room.command === 'leave') {  // 방 나가기 요청
 
             socket.leave(room.roomId);
-         
-            // 응답 메시지 전송
-            sendResponse(socket, 'room', '200', '방에서 나갔습니다.');
         }
 
         var roomList = getRoomList();
@@ -252,10 +236,4 @@ function getRoomList() {
     console.dir(roomList);
     
     return roomList;
-}
-
-// 응답 메시지 전송 메소드
-function sendResponse(socket, command, code, message) {
-	var statusObj = {command: command, code: code, message: message};
-	socket.emit('response', statusObj);
 }
