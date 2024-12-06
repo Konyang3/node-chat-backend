@@ -16,6 +16,7 @@ module.exports = function(pool) {
         var subjectName = req.body.subjectName;
         var professorName = req.body.professorName;
         var separatedClass = req.body.separatedClass;
+        var subjectCode = req.body.subjectCode;
 
         if(pool) {
             pool.getConnection(function(err, conn) {
@@ -30,13 +31,11 @@ module.exports = function(pool) {
 
                 console.log('데이터베이스 연결 스레드 아이디: ' + conn.threadId)
 
-                const randomString = getRandomString(6)
-
                 var data = {
                     subject_name: subjectName, 
                     professor_name: professorName, 
                     separated_class: separatedClass,
-                    subject_code: randomString
+                    subject_code: subjectCode
                 }
 
                 var exec = conn.query('insert into subjects set ?', data, function (err, result) {
@@ -73,16 +72,4 @@ module.exports = function(pool) {
             })
         }
     }
-}
-
-function getRandomString(length) {
-    let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const charactersLength = characters.length;
-    let counter = 0;
-    while (counter < length) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-      counter += 1;
-    }
-    return result;
 }
