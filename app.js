@@ -53,7 +53,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
 
-app.use(cors({origin: 'http://localhost:3000', credentials: true, allowedHeaders: ['Content-Type'] }));
+app.use(cors({origin: 'http://10.22.9.132:3000', credentials: true, allowedHeaders: ['Content-Type'] }));
 
 var router = express.Router();
 
